@@ -3,8 +3,11 @@ package main
 import "fmt"
 
 type neuron struct {
-	weights vector
-	bias    float64
+	weights           vector
+	bias              float64
+	derivativeInputs  vector
+	derivativeWeights vector
+	derivativeBias    float64
 }
 
 func newNeuron(inputCount int) neuron {

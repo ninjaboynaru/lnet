@@ -7,6 +7,7 @@ import (
 type layer struct {
 	layerSize  int
 	inputCount int
+	lastInput  matrix
 	neurons    []neuron
 }
 
@@ -84,7 +85,7 @@ func (l layer) singleInputForward(input vector) vector {
 	return output
 }
 
-func (l layer) forward(input matrix) matrix {
+func (l *layer) forward(input matrix) matrix {
 	if len(input) == 0 {
 		panic("Can not forward layer with empty input batch")
 	}
@@ -95,5 +96,40 @@ func (l layer) forward(input matrix) matrix {
 		output[rowIndex] = l.singleInputForward(inputSample)
 	}
 
+	l.lastInput = input
 	return output
+}
+
+func (l *layer) backward(forwardDerivatives matrix) {
+	for _, forwardDerivativeRow := range forwardDerivatives {
+		var forwardLen int = len(forwardDerivativeRow)
+		if forwardLen != l.layerSize {
+			panic(fmt.Sprintf("Forward derivatives contain a row whose length %d does not match layer size %d", forwardLen, l.layerSize))
+		}
+	}
+
+	for neuronIndex := range l.neurons {
+		var n *neuron = &l.neurons[neuronIndex]
+		var neuronForwardDerivative float64 = 0
+
+		for _, forwardRow := range forwardDerivatives {
+			neuronForwardDerivative += forwardRow[neuronIndex]
+		}
+
+		n.derivativeInputs = make(vector, len(n.weights))
+		for derivativeInputIndex := range n.derivativeInputs {
+			n.derivativeInputs[derivativeInputIndex] = n.weights[derivativeInputIndex] * neuronForwardDerivative
+		}
+
+		n.derivativeWeights = make(vector, len(n.weights))
+		for _, inputSample := range l.lastInput {
+			for weightIndex, weightValue := range n.derivativeWeights {
+				n.derivativeWeights[weightIndex] = weightValue + (inputSample[weightIndex] * neuronForwardDerivative)
+			}
+		}
+
+		n.derivativeBias = 1 * neuronForwardDerivative
+
+	}
+
 }
