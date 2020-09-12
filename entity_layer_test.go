@@ -16,38 +16,38 @@ func TestNewLayerPanics(t *testing.T) {
 	assert.Panics(func() { newLayer(1, -1) }, "Should panic with negative input count")
 	assert.Panics(func() { newLayer(1, 0) }, "Should panic with input count 0")
 
-	var weightsMatrix matrix
-	var biasesVector vector
+	var weights matrix
+	var biases vector
 	var tryNewLayerExplicit func() = func() {
-		newLayerExplicit(weightsMatrix, biasesVector)
+		newLayerExplicit(weights, biases)
 	}
 
-	weightsMatrix = matrix{}
-	biasesVector = vector{1.0, 2.0}
+	weights = matrix{}
+	biases = vector{1.0, 2.0}
 	assert.Panics(tryNewLayerExplicit, "Should panic with 0 neurons")
 
-	weightsMatrix = matrix{{1.0}, {2.0}}
-	biasesVector = vector{}
+	weights = matrix{{1.0}, {2.0}}
+	biases = vector{}
 	assert.Panics(tryNewLayerExplicit, "Should panic with 0 biases")
 
-	weightsMatrix = matrix{}
-	biasesVector = vector{}
+	weights = matrix{}
+	biases = vector{}
 	assert.Panics(tryNewLayerExplicit, "Should panic with both 0 neurons and biases")
 
-	weightsMatrix = matrix{{1.0}, {2.0}}
-	biasesVector = vector{1.0}
+	weights = matrix{{1.0}, {2.0}}
+	biases = vector{1.0}
 	assert.Panics(tryNewLayerExplicit, "Should panic with mismatch between neuron and bias counts")
 
-	weightsMatrix = matrix{{1.0}, {2.0}}
-	biasesVector = vector{1.0}
+	weights = matrix{{1.0}, {2.0}}
+	biases = vector{1.0}
 	assert.Panics(tryNewLayerExplicit, "Should panic with mismatch between neuron and bias counts")
 
-	weightsMatrix = matrix{
+	weights = matrix{
 		{1.0, 2.0, 3.0},
 		{1.1, 2.2, 5.4},
 		{1.2},
 	}
-	biasesVector = vector{1.0, 1.0, 1.0}
+	biases = vector{1.0, 1.0, 1.0}
 	assert.Panics(tryNewLayerExplicit, "Should panic with neurons that have different input counts")
 }
 
@@ -64,63 +64,115 @@ func TestNewLayerLengths(t *testing.T) {
 		require.Len(n.weights, inputCount, "Neuron in layer has incorrect ammount of weights for given input size")
 	}
 
-	require.Equal(layer.layerSize, layerSize, "Incorrect layerSize value")
-	require.Equal(layer.inputCount, inputCount, "Incorrect inputCount value")
+	require.Equal(layerSize, layer.layerSize, "Incorrect layerSize value")
+	require.Equal(inputCount, layer.inputCount, "Incorrect inputCount value")
 }
 
 func TestNewLayerExplicitLengths(t *testing.T) {
 	const neuronCount = 2
 	const inputCount = 3
 
-	var weightsMatrix matrix = matrix{
+	var weights matrix = matrix{
 		{1, 2, 3},
 		{4, 5, 6},
 	}
-	var biasesVector vector = vector{
+	var biases vector = vector{
 		1,
 		1,
 	}
 
 	var require *require.Assertions = require.New(t)
-	var layer layer = newLayerExplicit(weightsMatrix, biasesVector)
+	var layer layer = newLayerExplicit(weights, biases)
 
-	require.Equal(layer.layerSize, neuronCount, "Incorrect layerSize value")
-	require.Equal(layer.inputCount, inputCount, "Incorrect inputCount value")
+	require.Equal(neuronCount, layer.layerSize, "Incorrect layerSize value")
+	require.Equal(inputCount, layer.inputCount, "Incorrect inputCount value")
 	require.Len(layer.neurons, neuronCount, "Layer has incorrect amount of neurons")
 
 	for index, n := range layer.neurons {
-		require.Equal(n.weights, weightsMatrix[index], "Neuron weights incorrect")
-		require.Equal(n.bias, biasesVector[index], "Neuron bias incorrect")
+		require.Equal(weights[index], n.weights, "Neuron weights incorrect")
+		require.Equal(biases[index], n.bias, "Neuron bias incorrect")
 	}
 
 }
 
 func TestLayerForward(t *testing.T) {
-	var expectedOutput matrix = matrix{
-		{17, 38, 32},
-		{17, 36, 21},
-	}
+	var inputs matrix
+	var expectedOutput matrix
+	var actualOutput matrix
 
-	var weightsMatrix matrix = matrix{
+	var assert *assert.Assertions = assert.New(t)
+	var biases vector = vector{1, 2, 4}
+	var weights matrix = matrix{
 		{2, 2, 4},
 		{6, 4, 8},
 		{12, 1, 1},
 	}
+	var l layer = newLayerExplicit(weights, biases)
 
-	var biases vector = vector{
-		1,
-		2,
-		4,
-	}
+	inputs = matrix{{1, 3, 2}}
+	expectedOutput = matrix{{17, 36, 21}}
+	actualOutput = l.forward(inputs)
+	assert.Equal(expectedOutput, actualOutput, "Layer forward returns wrong output for single input row")
 
-	var inputs = matrix{
+	inputs = matrix{
 		{2, 2, 2},
 		{1, 3, 2},
 	}
 
-	var l layer = newLayerExplicit(weightsMatrix, biases)
-	var actualOutput matrix = l.forward(inputs)
+	expectedOutput = matrix{
+		{17, 38, 32},
+		{17, 36, 21},
+	}
 
-	assert.Equal(t, actualOutput, expectedOutput, "Layer forward returns wrong value")
+	actualOutput = l.forward(inputs)
+	assert.Equal(expectedOutput, actualOutput, "Layer forward returns wrong output for multiple input rows")
+}
+
+func TestLayerBackwardPanics(t *testing.T) {
+	var l layer
+	var doPanicFunc func()
+	var mockForwardInputDerivative vector
+
+	l = newLayer(3, 3)
+	mockForwardInputDerivative = vector{1, 1, 1}
+	doPanicFunc = func() {
+		l.backward(mockForwardInputDerivative)
+	}
+	assert.Panics(t, doPanicFunc, "Should panic on back propigate with no previous input")
+
+	l = newLayer(3, 3)
+	var input matrix = matrix{{1, 1, 1}, {1, 1, 1}}
+	mockForwardInputDerivative = vector{1, 1, 1, 1, 1, 1, 1}
+	l.forward(input)
+	doPanicFunc = func() {
+		l.backward(mockForwardInputDerivative)
+	}
+	assert.Panics(t, doPanicFunc, "Should panic on back propigate with wrong size forward derivative argument")
+}
+
+func TestLayerBackward(t *testing.T) {
+	var assert *assert.Assertions = assert.New(t)
+	var biases vector = vector{1, 2, 4}
+	var weights matrix = matrix{
+		{2, 2, 4},
+		{6, 4, 8},
+		{12, 1, 1},
+	}
+	var l layer = newLayerExplicit(weights, biases)
+
+	var inputs matrix = matrix{
+		{2, 2, 2},
+		{1, 3, 2},
+	}
+
+	var mockForwardInputDerivative = vector{1, 1, 1}
+
+	l.forward(inputs)
+	l.backward(mockForwardInputDerivative)
+
+	var expectedInputDerivative vector = vector{20, 7, 13}
+	var actualInputDerivative vector = l.getLayerInputDerivative()
+
+	assert.Equal(expectedInputDerivative, actualInputDerivative, "Layer backwards produces wrong input derivatives for multiple input rows")
 
 }

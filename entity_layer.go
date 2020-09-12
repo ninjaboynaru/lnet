@@ -100,36 +100,46 @@ func (l *layer) forward(input matrix) matrix {
 	return output
 }
 
-func (l *layer) backward(forwardDerivatives matrix) {
-	for _, forwardDerivativeRow := range forwardDerivatives {
-		var forwardLen int = len(forwardDerivativeRow)
-		if forwardLen != l.layerSize {
-			panic(fmt.Sprintf("Forward derivatives contain a row whose length %d does not match layer size %d", forwardLen, l.layerSize))
+// getLayerInputDerivative pre processes all the layers neurons input derivatives into a single vector.
+// Returns an inputDerivative vector of length = to the layer size / how many inputs the layer takes
+func (l layer) getLayerInputDerivative() vector {
+	var inputDerivative vector = make(vector, l.layerSize)
+
+	for derivativeIndex := range inputDerivative {
+		for _, n := range l.neurons {
+			inputDerivative[derivativeIndex] = inputDerivative[derivativeIndex] + n.derivativeInputs[derivativeIndex]
 		}
+	}
+
+	return inputDerivative
+}
+
+func (l *layer) backward(forwardInputDerivative vector) {
+	var forwardInputDerivativeLen int = len(forwardInputDerivative)
+	if forwardInputDerivativeLen != l.layerSize {
+		panic(fmt.Sprintf("Forward derivative length %d does not match layer size %d", forwardInputDerivativeLen, l.layerSize))
+	}
+
+	if len(l.lastInput) == 0 {
+		panic("Layer has not previous input. Can not backpropigate")
 	}
 
 	for neuronIndex := range l.neurons {
 		var n *neuron = &l.neurons[neuronIndex]
-		var neuronForwardDerivative float64 = 0
-
-		for _, forwardRow := range forwardDerivatives {
-			neuronForwardDerivative += forwardRow[neuronIndex]
-		}
+		var neuronforwardInputDerivative float64 = forwardInputDerivative[neuronIndex]
 
 		n.derivativeInputs = make(vector, len(n.weights))
 		for derivativeInputIndex := range n.derivativeInputs {
-			n.derivativeInputs[derivativeInputIndex] = n.weights[derivativeInputIndex] * neuronForwardDerivative
+			n.derivativeInputs[derivativeInputIndex] = n.weights[derivativeInputIndex] * neuronforwardInputDerivative
 		}
 
 		n.derivativeWeights = make(vector, len(n.weights))
 		for _, inputSample := range l.lastInput {
-			for weightIndex, weightValue := range n.derivativeWeights {
-				n.derivativeWeights[weightIndex] = weightValue + (inputSample[weightIndex] * neuronForwardDerivative)
+			for weightIndex := range n.derivativeWeights {
+				n.derivativeWeights[weightIndex] = n.derivativeWeights[weightIndex] + (inputSample[weightIndex] * neuronforwardInputDerivative)
 			}
 		}
 
-		n.derivativeBias = 1 * neuronForwardDerivative
-
+		n.derivativeBias = 1 * neuronforwardInputDerivative
 	}
-
 }
