@@ -128,51 +128,51 @@ func TestLayerForward(t *testing.T) {
 	assert.Equal(expectedOutput, actualOutput, "Layer forward returns wrong output for multiple input rows")
 }
 
-func TestLayerBackwardPanics(t *testing.T) {
-	var l layer
-	var doPanicFunc func()
-	var mockForwardInputDerivative vector
+// func TestLayerBackwardPanics(t *testing.T) {
+// 	var l layer
+// 	var doPanicFunc func()
+// 	var mockForwardInputDerivative vector
 
-	l = newLayer(3, 3)
-	mockForwardInputDerivative = vector{1, 1, 1}
-	doPanicFunc = func() {
-		l.backward(mockForwardInputDerivative)
-	}
-	assert.Panics(t, doPanicFunc, "Should panic on back propigate with no previous input")
+// 	l = newLayer(3, 3)
+// 	mockForwardInputDerivative = vector{1, 1, 1}
+// 	doPanicFunc = func() {
+// 		l.backward(mockForwardInputDerivative)
+// 	}
+// 	assert.Panics(t, doPanicFunc, "Should panic on back propigate with no previous input")
 
-	l = newLayer(3, 3)
-	var input matrix = matrix{{1, 1, 1}, {1, 1, 1}}
-	mockForwardInputDerivative = vector{1, 1, 1, 1, 1, 1, 1}
-	l.forward(input)
-	doPanicFunc = func() {
-		l.backward(mockForwardInputDerivative)
-	}
-	assert.Panics(t, doPanicFunc, "Should panic on back propigate with wrong size forward derivative argument")
-}
+// 	l = newLayer(3, 3)
+// 	var input matrix = matrix{{1, 1, 1}, {1, 1, 1}}
+// 	mockForwardInputDerivative = vector{1, 1, 1, 1, 1, 1, 1}
+// 	l.forward(input)
+// 	doPanicFunc = func() {
+// 		l.backward(mockForwardInputDerivative)
+// 	}
+// 	assert.Panics(t, doPanicFunc, "Should panic on back propigate with wrong size forward derivative argument")
+// }
 
-func TestLayerBackward(t *testing.T) {
-	var assert *assert.Assertions = assert.New(t)
-	var biases vector = vector{1, 2, 4}
-	var weights matrix = matrix{
-		{2, 2, 4},
-		{6, 4, 8},
-		{12, 1, 1},
-	}
-	var l layer = newLayerExplicit(weights, biases)
+// func TestLayerBackward(t *testing.T) {
+// 	var assert *assert.Assertions = assert.New(t)
+// 	var biases vector = vector{1, 2, 4}
+// 	var weights matrix = matrix{
+// 		{2, 2, 4},
+// 		{6, 4, 8},
+// 		{12, 1, 1},
+// 	}
+// 	var l layer = newLayerExplicit(weights, biases)
 
-	var inputs matrix = matrix{
-		{2, 2, 2},
-		{1, 3, 2},
-	}
+// 	var inputs matrix = matrix{
+// 		{2, 2, 2},
+// 		{1, 3, 2},
+// 	}
 
-	var mockForwardInputDerivative = vector{1, 1, 1}
+// 	var mockForwardInputDerivative = vector{1, 1, 1}
 
-	l.forward(inputs)
-	l.backward(mockForwardInputDerivative)
+// 	l.forward(inputs)
+// 	l.backward(mockForwardInputDerivative)
 
-	var expectedInputDerivative vector = vector{20, 7, 13}
-	var actualInputDerivative vector = l.getLayerInputDerivative()
+// 	var expectedInputDerivative vector = vector{20, 7, 13}
+// 	var actualInputDerivative vector = l.getLayerInputDerivative()
 
-	assert.Equal(expectedInputDerivative, actualInputDerivative, "Layer backwards produces wrong input derivatives for multiple input rows")
+// 	assert.Equal(expectedInputDerivative, actualInputDerivative, "Layer backwards produces wrong input derivatives for multiple input rows")
 
-}
+// }

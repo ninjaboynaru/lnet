@@ -14,7 +14,7 @@ func (c crossentropy) forward(input matrix, targets []int) vector {
 
 	if inputLen != targetsLen {
 		panic(fmt.Sprintf(
-			"Crossentropy targets length %d does not match input batch size %d. There must be one targets value per row in the inputs batch matrix",
+			"Crossentropy targets length %d does not match input batch size %d. There must be one target value per row in the inputs batch matrix",
 			inputLen, targetsLen,
 		))
 	}

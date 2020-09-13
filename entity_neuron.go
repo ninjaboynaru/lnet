@@ -5,7 +5,7 @@ import "fmt"
 type neuron struct {
 	weights           vector
 	bias              float64
-	derivativeInputs  vector
+	derivativeInputs  matrix
 	derivativeWeights vector
 	derivativeBias    float64
 }
