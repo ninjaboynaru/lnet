@@ -48,3 +48,34 @@ func TestCrossentropyForward(t *testing.T) {
 
 	assert.Equal(t, actualOutput, expectedOutput, "Crossentropy forward returns wrong value")
 }
+
+func TestCrossentropyBackwardPanics(t *testing.T) {
+	var assert *assert.Assertions = assert.New(t)
+	var c crossentropy
+	var doPanic func() = func() { c.backward() }
+
+	c = crossentropy{}
+	assert.Panics(doPanic, "Should panic on back propigate with no previous input")
+}
+
+func TestCrossentropyBackwardDerivativeInput(t *testing.T) {
+	var c crossentropy = crossentropy{}
+	var inputs matrix = matrix{
+		{0.7, 0.2, 0.1},
+		{0.4, 0.5, 0.1},
+	}
+
+	var targets []int = []int{0, 2}
+
+	c.forward(inputs, targets)
+	c.backward()
+
+	var expectedInputDerivatives = matrix{
+		{-1.4285714285714286, 0, 0},
+		{0, 0, -10},
+	}
+
+	var actualInputDerivatives = c.getInputDerivatives()
+
+	assert.Equal(t, expectedInputDerivatives, actualInputDerivatives, "Crossentropy back propigate produces wrong input derivatives")
+}
