@@ -187,7 +187,7 @@ func TestLayerBackwardDerivativeInput(t *testing.T) {
 		{22, 9, 17},
 	}
 
-	var actualInputDerivatives matrix = l.getLayerInputDerivatives()
+	var actualInputDerivatives matrix = l.getInputDerivatives()
 
 	assert.Equal(t, expectedInputDerivatives, actualInputDerivatives, "Layer backwards produces wrong input derivatives for multiple input rows")
 }

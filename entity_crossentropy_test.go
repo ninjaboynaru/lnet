@@ -12,7 +12,8 @@ func TestCrossentropyForwardPanics(t *testing.T) {
 	var assert *assert.Assertions = assert.New(t)
 
 	var tryForward func() = func() {
-		crossentropy{}.forward(input, targets)
+		var c crossentropy
+		c.forward(input, targets)
 	}
 
 	input = matrix{{1, 2}, {1, 2}}
@@ -42,7 +43,8 @@ func TestCrossentropyForward(t *testing.T) {
 		3.506557897319982,
 	}
 
-	var actualOutput = crossentropy{}.forward(input, targets)
+	var c crossentropy
+	var actualOutput = c.forward(input, targets)
 
 	assert.Equal(t, actualOutput, expectedOutput, "Crossentropy forward returns wrong value")
 }

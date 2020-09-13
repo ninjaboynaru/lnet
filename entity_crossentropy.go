@@ -6,9 +6,12 @@ import (
 )
 
 type crossentropy struct {
+	lastInput        matrix
+	lastTargets      []int
+	inputDerivatives matrix
 }
 
-func (c crossentropy) forward(input matrix, targets []int) vector {
+func (c *crossentropy) forward(input matrix, targets []int) vector {
 	var inputLen int = len(input)
 	var targetsLen int = len(targets)
 
@@ -37,6 +40,43 @@ func (c crossentropy) forward(input matrix, targets []int) vector {
 		output[index] = loss
 	}
 
+	c.lastInput = input
+	c.lastTargets = targets
 	return output
+}
 
+func (c crossentropy) getInputDerivatives() matrix {
+	return c.inputDerivatives
+}
+
+func (c *crossentropy) backward() {
+	var lastInputLen int = len(c.lastInput)
+	var lastTargetsLen int = len(c.lastTargets)
+
+	if lastInputLen == 0 {
+		panic("Crossentropy has no previous input. Can not back propigate")
+	}
+
+	if lastTargetsLen == 0 {
+		panic("Crossentropy has no previous targets. Can not back propigate")
+	}
+
+	var inputDerivatives matrix = make(matrix, lastInputLen)
+	for inputDerivativeIndex := range inputDerivatives {
+		var inputRow vector = c.lastInput[inputDerivativeIndex]
+		var derivativeRow vector = make(vector, len(inputRow))
+		var targetIndex int = c.lastTargets[inputDerivativeIndex]
+
+		for derivativeRowIndex := range derivativeRow {
+			if targetIndex == derivativeRowIndex {
+				derivativeRow[derivativeRowIndex] = -1 / inputRow[derivativeRowIndex]
+			} else {
+				derivativeRow[derivativeRowIndex] = 0
+			}
+		}
+
+		inputDerivatives[inputDerivativeIndex] = derivativeRow
+	}
+
+	c.inputDerivatives = inputDerivatives
 }

@@ -101,7 +101,7 @@ func (l *layer) forward(input matrix) matrix {
 }
 
 // getLayerInputDerivatives pprocesses all the layers neurons input derivatives into a single matrix.
-func (l layer) getLayerInputDerivatives() matrix {
+func (l layer) getInputDerivatives() matrix {
 	var inputDerivatives matrix = make(matrix, len(l.lastInput))
 
 	for sampleIndex := range inputDerivatives {
