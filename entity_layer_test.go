@@ -128,51 +128,99 @@ func TestLayerForward(t *testing.T) {
 	assert.Equal(expectedOutput, actualOutput, "Layer forward returns wrong output for multiple input rows")
 }
 
-// func TestLayerBackwardPanics(t *testing.T) {
-// 	var l layer
-// 	var doPanicFunc func()
-// 	var mockForwardInputDerivative vector
+func TestLayerBackwardPanics(t *testing.T) {
+	var l layer
+	var doPanicFunc func()
+	var mockForwardInputDerivatives matrix
+	var input matrix
 
-// 	l = newLayer(3, 3)
-// 	mockForwardInputDerivative = vector{1, 1, 1}
-// 	doPanicFunc = func() {
-// 		l.backward(mockForwardInputDerivative)
-// 	}
-// 	assert.Panics(t, doPanicFunc, "Should panic on back propigate with no previous input")
+	l = newLayer(3, 3)
+	mockForwardInputDerivatives = matrix{{1}, {1}, {1}}
+	doPanicFunc = func() {
+		l.backward(mockForwardInputDerivatives)
+	}
+	assert.Panics(t, doPanicFunc, "Should panic on back propigate with no previous input")
 
-// 	l = newLayer(3, 3)
-// 	var input matrix = matrix{{1, 1, 1}, {1, 1, 1}}
-// 	mockForwardInputDerivative = vector{1, 1, 1, 1, 1, 1, 1}
-// 	l.forward(input)
-// 	doPanicFunc = func() {
-// 		l.backward(mockForwardInputDerivative)
-// 	}
-// 	assert.Panics(t, doPanicFunc, "Should panic on back propigate with wrong size forward derivative argument")
-// }
+	l = newLayer(3, 3)
+	input = matrix{{1, 1, 1}, {1, 1, 1}}
+	mockForwardInputDerivatives = matrix{{1, 1, 1}, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}, {1, 1, 1}}
+	l.forward(input)
+	doPanicFunc = func() {
+		l.backward(mockForwardInputDerivatives)
+	}
+	assert.Panics(t, doPanicFunc, "Should panic on back propigate with forward derivative length not matching input length")
 
-// func TestLayerBackward(t *testing.T) {
-// 	var assert *assert.Assertions = assert.New(t)
-// 	var biases vector = vector{1, 2, 4}
-// 	var weights matrix = matrix{
-// 		{2, 2, 4},
-// 		{6, 4, 8},
-// 		{12, 1, 1},
-// 	}
-// 	var l layer = newLayerExplicit(weights, biases)
+	l = newLayer(3, 3)
+	input = matrix{{1, 1, 1}, {1, 1, 1}}
+	mockForwardInputDerivatives = matrix{{1, 1, 1}, {1, 1, 1, 1, 1, 1}}
+	l.forward(input)
+	doPanicFunc = func() {
+		l.backward(mockForwardInputDerivatives)
+	}
+	assert.Panics(t, doPanicFunc, "Should panic on back propigate with forward derivative row length not matching layer size")
+}
 
-// 	var inputs matrix = matrix{
-// 		{2, 2, 2},
-// 		{1, 3, 2},
-// 	}
+func TestLayerBackwardDerivativeInput(t *testing.T) {
+	var biases vector = vector{1, 2, 4}
+	var weights matrix = matrix{
+		{2, 2, 4},
+		{6, 4, 8},
+		{12, 1, 1},
+	}
+	var l layer = newLayerExplicit(weights, biases)
 
-// 	var mockForwardInputDerivative = vector{1, 1, 1}
+	var inputs matrix = matrix{
+		{2, 2, 2},
+		{1, 3, 2},
+	}
 
-// 	l.forward(inputs)
-// 	l.backward(mockForwardInputDerivative)
+	var mockForwardInputDerivatives = matrix{
+		{1, 1, 1},
+		{2, 1, 1},
+	}
 
-// 	var expectedInputDerivative vector = vector{20, 7, 13}
-// 	var actualInputDerivative vector = l.getLayerInputDerivative()
+	l.forward(inputs)
+	l.backward(mockForwardInputDerivatives)
 
-// 	assert.Equal(expectedInputDerivative, actualInputDerivative, "Layer backwards produces wrong input derivatives for multiple input rows")
+	var expectedInputDerivatives matrix = matrix{
+		{20, 7, 13},
+		{22, 9, 17},
+	}
 
-// }
+	var actualInputDerivatives matrix = l.getLayerInputDerivatives()
+
+	assert.Equal(t, expectedInputDerivatives, actualInputDerivatives, "Layer backwards produces wrong input derivatives for multiple input rows")
+}
+
+func TestLayerBackwardDerivativeWeights(t *testing.T) {
+	var biases vector = vector{1, 2, 4}
+	var weights matrix = matrix{
+		{2, 2, 4},
+		{6, 4, 8},
+		{12, 1, 1},
+	}
+	var l layer = newLayerExplicit(weights, biases)
+
+	var inputs matrix = matrix{
+		{2, 2, 2},
+		{1, 3, 2},
+	}
+
+	var mockForwardInputDerivatives = matrix{
+		{1, 1, 1},
+		{2, 1, 1},
+	}
+
+	l.forward(inputs)
+	l.backward(mockForwardInputDerivatives)
+
+	var expectedNeuronDerivativeWeights matrix = matrix{
+		{2, 4, 3},
+		{1.5, 2.5, 2},
+		{1.5, 2.5, 2},
+	}
+
+	require.Equal(t, expectedNeuronDerivativeWeights[0], l.neurons[0].derivativeWeights, "Layer backwards produces wrong derivative weights for neuron 1")
+	require.Equal(t, expectedNeuronDerivativeWeights[1], l.neurons[1].derivativeWeights, "Layer backwards produces wrong derivative weights for neuron 2")
+	require.Equal(t, expectedNeuronDerivativeWeights[2], l.neurons[2].derivativeWeights, "Layer backwards produces wrong derivative weights for neuron 3")
+}
