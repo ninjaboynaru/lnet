@@ -19,3 +19,13 @@ func clip(min, max, value float64) float64 {
 
 	return value
 }
+
+func vectorSum(vec vector) float64 {
+	var sum float64 = 0
+
+	for _, value := range vec {
+		sum += value
+	}
+
+	return sum
+}
