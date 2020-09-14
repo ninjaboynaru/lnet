@@ -129,7 +129,7 @@ func (l *layer) backward(forwardInputDerivatives matrix) {
 
 	if forwardInputDerivativesLen != lastInputLen {
 		panic(fmt.Sprintf(
-			"Forward derivatives length %d does not match previous inputs length %d. There should a row in the forward derivatives matrix for each input sample",
+			"Forward derivatives length %d does not match previous inputs length %d. There must be a row in the forward derivatives matrix for each input sample in the previous input",
 			forwardInputDerivativesLen, lastInputLen,
 		))
 	}
