@@ -174,5 +174,7 @@ func (l *layer) backward(forwardInputDerivatives matrix) {
 		for _, forwardDerivativeSample := range forwardInputDerivatives {
 			n.derivativeBias += (1 * forwardDerivativeSample[neuronIndex])
 		}
+
+		n.derivativeBias = n.derivativeBias / float64(len(forwardInputDerivatives))
 	}
 }

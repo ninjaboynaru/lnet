@@ -8,6 +8,7 @@ import (
 type crossentropy struct {
 	lastInput        matrix
 	lastTargets      []int
+	lastOutput       vector
 	inputDerivatives matrix
 }
 
@@ -42,6 +43,7 @@ func (c *crossentropy) forward(input matrix, targets []int) vector {
 
 	c.lastInput = input
 	c.lastTargets = targets
+	c.lastOutput = output
 	return output
 }
 
@@ -79,4 +81,19 @@ func (c *crossentropy) backward() {
 	}
 
 	c.inputDerivatives = inputDerivatives
+}
+
+func (c crossentropy) calculateAverageLoss() float64 {
+	if len(c.lastOutput) == 0 {
+		panic("Crossentropy has not previous output. Can not calculate average loss")
+	}
+
+	var averageLoss float64 = 0
+	for _, sampleLossValue := range c.lastOutput {
+		averageLoss += sampleLossValue
+	}
+
+	averageLoss = averageLoss / float64(len(c.lastOutput))
+
+	return averageLoss
 }
